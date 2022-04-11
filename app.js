@@ -1,25 +1,16 @@
+require("dotenv").config();
 const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const session = require("express-session");
+const { sequelize } = require("./models");
 
-const indexRouter = require('./routes/index');
-const usersRouter = require('./routes/users');
-const models = require("./models/index.js");
-
-models.sequelize.sync().then( () => {
-  console.log("DB connect OK");
-}).catch(err => {
-  console.log("DB error");
-  console.log(err);
-})
+const userAPI = require("./routes/user");
 
 const app = express();
-
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
+sequelize.sync();
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -27,23 +18,30 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use(
+  session({
+    secret: process.env.COOKIE,
+    key: "sid",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      maxAge: 24000 * 60 * 60,
+    },
+  })
+);
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
-});
+app.use("/api/user", userAPI);
 
 // error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+app.use(
+  (err, req, res) => res.status(200).json({ message: "에러" })
+  // next(createError(404));
+);
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+app.use((err, req, res) => {
+  res.locals.message = err.message;
+  res.locals.error = req.app.get("env") === "development" ? err : {};
+  res.status(err.status || 500).send("error");
 });
 
 module.exports = app;
