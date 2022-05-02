@@ -68,9 +68,46 @@ const Login = async (req, res, next) => {
   }
 };
 
+const Logout = (req, res, next) => {
+  try {
+    req.session.destroy();
+    return resp(res, 200, { msg: "로그아웃 완료!" });
+  } catch (e) {
+    return next(e);
+  }
+};
+
+const DeleteUser = async (req, res, next) => {
+  const { id } = req.body;
+  const { email } = req.session;
+  try {
+    if (typeof email === "undefined") {
+      return resp(res, 401, { msg: "권한이 없습니다" });
+    }
+    if (!id) {
+      return resp(res, 400, { msg: "탈퇴할 회원을 선택해 주세요" });
+    }
+    const existUser = await User.findOne({
+      where: { id },
+    });
+    if (!existUser) {
+      return resp(res, 400, { msg: "존재하지 않는 회원입니다"});
+    }
+    const deleted = await User.destroy({ where: { id } });
+    if (deleted) {
+      return resp(res, 200, { msg: "회원 강제탈퇴 완료" });
+    }
+    return resp(res, 404, { msg: "잘못된 접근입니다" });
+  } catch (e) {
+    return next(e);
+  }
+};
+
 
 
 module.exports = {
   Join,
   Login,
+  Logout,
+  DeleteUser,
 }

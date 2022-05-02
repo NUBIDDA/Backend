@@ -1,7 +1,10 @@
 const router = require("express").Router();
 
 const {
-  Join, Login,
+  Join, 
+  Login,
+  Logout,
+  DeleteUser,
 } = require("../api/user");
 
 router
@@ -12,6 +15,16 @@ router
   .post("/Login", async (req, res, next) => {
     await Login(req, res, next);
   })
+
+  .get("/Logout", async (req, res, next) => {
+    await Logout(req, res, next);
+  })
+
+  .post("/DeleteUser", async (req, res, next) => {
+    await DeleteUser(req, res, next);
+  })
+
+  
 
 
 module.exports = router;
