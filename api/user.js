@@ -8,8 +8,12 @@ const {
 
 const Join = async (req, res, next) => {
   const {
+    nick,
     email,
     password,
+    babyName,
+    babyWeight,
+    babyStatus,
   } = req.body;
 
   let user;
@@ -26,8 +30,12 @@ const Join = async (req, res, next) => {
     };
 
     user = await User.create({
+      nick,
       email,
       password,
+      babyName,
+      babyWeight,
+      babyStatus,
     });
 
     if (user) {
@@ -40,7 +48,29 @@ const Join = async (req, res, next) => {
   }
 };
 
+const Login = async (req, res, next) => {
+  const { email, password } = req.body;
+  try {
+    if (!email || !password) {
+      return resp(res, 400, { msg: "빈칸을 입력해주세요" });
+    }
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return resp(res, 400, { msg: "일치하는 계정을 찾을 수 없습니다" });
+    }
+    if (user.password === password) {
+      req.session.email = email;
+      return resp(res, 200, { msg: "로그인 성공" });
+    }
+    return resp(res, 400, { msg: "일치하는 계정을 찾을 수 없습니다" });
+  } catch (e) {
+    return next(e);
+  }
+};
+
+
 
 module.exports = {
   Join,
+  Login,
 }
